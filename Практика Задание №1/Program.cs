@@ -8,47 +8,38 @@ namespace Практика_Задание__1
     {
         public static string[] ReadFromFile()
         {
-            return Console.ReadLine().Split(' ');
+            string[] coords = new string[8];
+            for (int i = 0; i < 8; i += 2) // Распределяет координаты попарно x1,y1,x2...
+            {
+                string coordsPair = Console.ReadLine();
+                coords[i] = coordsPair.Split(' ')[0];
+                coords[i + 1] = coordsPair.Split(' ')[1];
+            }
+            return coords;
         }                                                     // Читает координаты отрезков
 
-        public static bool DoLineCross(string[] coords)
-        {                       // Получает координаты
-            int[] xArray = { int.Parse(coords[0]), int.Parse(coords[2]), int.Parse(coords[4]), int.Parse(coords[6]) }; // Создание массива с координатами x
-            int[] yArray = { int.Parse(coords[1]), int.Parse(coords[3]), int.Parse(coords[5]), int.Parse(coords[7]) }; // Создание массива с координатами y
+        public static void DoLineCross(string[] coords)
+        {                            // Получает координаты
+            long x1 = int.Parse(coords[0]), x2 = int.Parse(coords[2]), x3 = int.Parse(coords[4]), x4 = int.Parse(coords[6]), // Координаты х и у
+                y1 = int.Parse(coords[1]), y2 = int.Parse(coords[3]), y3 = int.Parse(coords[5]), y4 = int.Parse(coords[7]);
 
-            ArrangeByAscending(ref xArray, ref yArray, 0);                                                        // Для корректного вычисления углового коэффициента требуется x1<=x2
-            ArrangeByAscending(ref xArray, ref yArray, 2);                                                        // Для корректного вычисления углового коэффициента требуется x3<=x4
+            bool pseudoscalarProduct1 = ((x2 - x1) * (y4 - y1) - (x4 - x1) * (y2 - y1)) * ((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) <= 0, // Произведение косых произведений: [P1P2, P1P4] * [P1P2, P1P3], P1-P4, имеют координаты с соответсвующими индексами, требуется для того, чтобы проверить, что концы каждого из отрезков лежат по разные стороны относительного концов другого отрезка
+                 pseudoscalarProduct2 = ((x4 - x3) * (y1 - y3) - (x1 - x3) * (y4 - y3)) * ((x4 - x3) * (y2 - y3) - (x2 - x3) * (y4 - y3)) <= 0, // Произведение косых произведений: [P3P4, P3P1] * [P3P4, P3P2], P1-P4, имеют координаты с соответсвующими индексами, требуется для того, чтобы проверить, что концы каждого из отрезков лежат по разные стороны относительного концов другого отрезка
+                 scalarProduct1 = (x1 - x3) * (x2 - x3) + (y1 - y3) * (y2 - y3) <= 0, // Скалярное произведение (P3P1,P3P2)
+                 scalarProduct2 = (x1 - x4) * (x2 - x4) + (y1 - y4) * (y2 - y4) <= 0, // Скалярное произведение (P4P1,P4P2)
+                 scalarProduct3 = (x3 - x1) * (x4 - x1) + (y3 - y1) * (y4 - y1) <= 0, // Скалярное произведение (P1P3,P1P4)
+                 scalarProduct4 = (x3 - x2) * (x4 - x2) + (y3 - y2) * (y4 - y2) <= 0; // Скалярное произведение (P2P3,P2P4)
 
-            double k1 = yArray[0] == yArray[1] ? 0 : (yArray[1] - yArray[0]) / (xArray[1] - xArray[0]);           // Если y1=y2, то коэффициент = 0 иначе считаем по уравнению прямой
-            double k2 = yArray[2] == yArray[3] ? 0 : (yArray[3] - yArray[2]) / (xArray[3] - xArray[2]);           // Если y3=y4, то коэффициент = 0 иначе считаем по уравнению прямой
+            if (pseudoscalarProduct1 & pseudoscalarProduct2 & // Если оба произведения косых произведений <=0 значит концы каждого из отрезков лежат по разные стороны относительного концов другого отрезка 
+                (scalarProduct1 | scalarProduct2 | scalarProduct3 | scalarProduct4)) // Но, требуется проверить, что хотя бы один из концов одного отрезка принадлежит другому отрезку, в случае если отрезки части одной прямой (произведение косых произведений=0)
+                Console.WriteLine("Yes"); // Записывает "Yes", если общая точка есть
 
-            if (k1 == k2) return false;                                                                             // Прямые параллельны
-
-            double x = (yArray[1] - k2 * xArray[2] - yArray[0] - k1 * xArray[0]) / (k1 - k2);                      // Вычисление точки пересечения прямых
-            return (x < xArray[1]) & (x > xArray[0]) & (x < xArray[3]) & (x > xArray[2]);                         // Проверка на положение точки вне отрезков
+            Console.WriteLine("No"); // Или "No" - в противном случае
         }                                           // Выясняет пересекаются ли отрезки с помощью угловых коэффициентов
-        public static void ArrangeByAscending(ref int[] xArray, ref int[] yArray, int startIndex)
-        {                              // Массив х-ов   // Массив у-ов     // С какого индекса начать сравнение
-            if (xArray[startIndex] > xArray[startIndex + 1])
-            {
-                int temp = xArray[startIndex];
-                xArray[startIndex] = xArray[startIndex + 1];
-                xArray[startIndex + 1] = temp;
-
-                temp = yArray[startIndex];
-                yArray[startIndex] = yArray[startIndex + 1];
-                yArray[startIndex + 1] = temp;
-            }
-        } // Для корректного вычисления углового коэффициента требуется x1<=x2,x3<=x4
-
-        public static void WriteToFile(bool doCross)
-        {                       // Пересекаются ли отрезки
-            Console.WriteLine(doCross ? "Yes" : "No"); // Соответсвенный ответ
-        }                                              // Записывает "Yes", если общая точка есть, или слово "No" - в противном случае. 
 
         public static void Main(string[] args)
         {
-            WriteToFile(DoLineCross(ReadFromFile())); // Запись в файл ответа, исходящего из поиска коэффициентов после чтения координат из файла
+            DoLineCross(ReadFromFile());
         }
     }
 }
